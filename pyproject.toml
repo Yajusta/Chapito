@@ -1,6 +1,6 @@
 [project]
 name = "Chapito"
-version = "0.1.9"
+version = "0.1.10"
 description = "Free API access using your web-based chatbots"
 readme = "README.md"
 requires-python = ">=3.12"

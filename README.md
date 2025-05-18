@@ -4,11 +4,9 @@ Free API access using your web-based chatbots ![logo](https://github.com/user-at
 
 ## Current version
 
-### 0.1.9 (2025-03-30)
+## 0.1.10 (2025-05-18)
 
-- [NEW] Host and port selection in configuration file and in command-line (thanks to @hapheus).
-- [NEW] Add `/models` endpoint for compatibility (thanks to @hapheus).
-- [FIX] Display last revelant message (thanks to @hapheus).
+- [NEW] Add Qwen support.
 
 ## Presentation
 
@@ -31,15 +29,16 @@ It achieves this by bridging the gap between premium chatbot accounts and applic
 
 ## Supported chatbots
 
+- [x] [Anthropic](https://claude.ai/new)
+- [x] [DeepSeek](https://chat.deepseek.com/)
+- [x] [Duckduckgo](https://duck.ai/)
+- [ ] Gemini
+- [ ] Github Copilot
 - [x] [Grok](https://grok.com/)
 - [x] [Mistral](https://chat.mistral.ai/chat)
 - [x] [OpenAI](https://chatgpt.com/)
-- [x] [DeepSeek](https://chat.deepseek.com/)
-- [ ] Gemini
-- [x] [Anthropic](https://claude.ai/new)
 - [ ] Perplexity
-- [ ] Github Copilot
-- [x] [Duckduckgo](https://duck.ai/)
+- [x] [Qwen](https://chat.qwen.ai/)
 - [ ] ...
 
 ## Workflow

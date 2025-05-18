@@ -1,5 +1,9 @@
 # Chapito - Changelog
 
+## 0.1.10 (2025-05-18)
+
+- [NEW] Add Qwen support.
+
 ## 0.1.9 (2025-03-30)
 
 - [NEW] Host and port selection in configuration file and in command-line (thanks to [@hapheus](https://github.com/hapheus)).

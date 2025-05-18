@@ -8,12 +8,13 @@ from chapito import (
     mistral_chat,
     openai_chat,
     perplexity_chat,
+    qwen_chat,
 )
 from chapito.proxy import init_proxy
 from chapito.tools.tools import check_official_version, greeting
 from chapito.types import Chatbot
 
-__version__ = "0.1.9"
+__version__ = "0.1.10"
 
 
 def main():
@@ -52,6 +53,10 @@ def main():
     if config.chatbot == Chatbot.DUCKDUCKGO:
         driver = duckduckgo_chat.initialize_driver(config)
         init_proxy(driver, duckduckgo_chat.send_request_and_get_response, config)
+
+    if config.chatbot == Chatbot.QWEN:
+        driver = qwen_chat.initialize_driver(config)
+        init_proxy(driver, qwen_chat.send_request_and_get_response, config)
 
 
 if __name__ == "__main__":

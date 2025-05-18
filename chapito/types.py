@@ -9,12 +9,13 @@ class OsType(Enum):
 
 
 class Chatbot(Enum):
+    ANTHROPIC = "anthropic"
+    DEEPSEEK = "deepseek"
+    DUCKDUCKGO = "duckduckgo"
+    GEMINI = "gemini"
+    GITHUB = "github"
     GROK = "grok"
     MISTRAL = "mistral"
-    PERPLEXITY = "perplexity"
     OPENAI = "openai"
-    GEMINI = "gemini"
-    DEEPSEEK = "deepseek"
-    ANTHROPIC = "anthropic"
-    GITHUB = "github"
-    DUCKDUCKGO = "duckduckgo"
+    PERPLEXITY = "perplexity"
+    QWEN = "qwen"
