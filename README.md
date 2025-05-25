@@ -4,9 +4,9 @@ Free API access using your web-based chatbots ![logo](https://github.com/user-at
 
 ## Current version
 
-## 0.1.10 (2025-05-18)
+## 0.1.11 (2025-05-25)
 
-- [NEW] Add Qwen support.
+- [NEW] Add Kimi support.
 
 ## Presentation
 
@@ -35,6 +35,7 @@ It achieves this by bridging the gap between premium chatbot accounts and applic
 - [ ] Gemini
 - [ ] Github Copilot
 - [x] [Grok](https://grok.com/)
+- [x] [Kimi](https://www.kimi.com/)
 - [x] [Mistral](https://chat.mistral.ai/chat)
 - [x] [OpenAI](https://chatgpt.com/)
 - [ ] Perplexity

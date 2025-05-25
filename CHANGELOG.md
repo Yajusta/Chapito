@@ -1,5 +1,9 @@
 # Chapito - Changelog
 
+## 0.1.11 (2025-05-25)
+
+- [NEW] Add Kimi support.
+
 ## 0.1.10 (2025-05-18)
 
 - [NEW] Add Qwen support.

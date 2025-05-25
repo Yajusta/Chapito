@@ -15,6 +15,7 @@ class Chatbot(Enum):
     GEMINI = "gemini"
     GITHUB = "github"
     GROK = "grok"
+    KIMI = "kimi"
     MISTRAL = "mistral"
     OPENAI = "openai"
     PERPLEXITY = "perplexity"

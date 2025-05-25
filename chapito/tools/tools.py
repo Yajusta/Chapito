@@ -24,6 +24,7 @@ def get_os() -> OsType:
 
 def paste(textarea):
     logging.debug("Paste prompt")
+    textarea.click()
     if get_os() == OsType.MACOS:
         textarea.send_keys(Keys.COMMAND, "v")
     else:
