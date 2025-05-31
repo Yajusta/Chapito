@@ -1,5 +1,6 @@
 from chapito.config import Config
 from chapito import (
+    ai_studio_chat,
     anthropic_chat,
     deepseek_chat,
     duckduckgo_chat,
@@ -62,6 +63,10 @@ def main():
     if config.chatbot == Chatbot.QWEN:
         driver = qwen_chat.initialize_driver(config)
         init_proxy(driver, qwen_chat.send_request_and_get_response, config)
+
+    if config.chatbot == Chatbot.AI_STUDIO:
+        driver = ai_studio_chat.initialize_driver(config)
+        init_proxy(driver, deepseek_chat.send_request_and_get_response, config)
 
 
 if __name__ == "__main__":

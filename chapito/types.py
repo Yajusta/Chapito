@@ -20,3 +20,4 @@ class Chatbot(Enum):
     OPENAI = "openai"
     PERPLEXITY = "perplexity"
     QWEN = "qwen"
+    AI_STUDIO = "ai_studio"
