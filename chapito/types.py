@@ -9,6 +9,7 @@ class OsType(Enum):
 
 
 class Chatbot(Enum):
+    AI_STUDIO = "ai_studio"
     ANTHROPIC = "anthropic"
     DEEPSEEK = "deepseek"
     DUCKDUCKGO = "duckduckgo"
@@ -20,4 +21,3 @@ class Chatbot(Enum):
     OPENAI = "openai"
     PERPLEXITY = "perplexity"
     QWEN = "qwen"
-    AI_STUDIO = "ai_studio"
