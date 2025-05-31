@@ -6,7 +6,7 @@ browser_profile_path = browser_profile
 browser_user_agent = Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36
 
 # The chatbot to use. 
-# Possible values: anthropic, deepseek, duckduckgo, grok, mistral, openai
+# Possible values: anthropic, deepseek, duckduckgo, gemini, grok, kimi, mistral, openai, qwen
 chatbot = mistral
 
 # Stream response?

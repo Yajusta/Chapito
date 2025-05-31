@@ -1,5 +1,9 @@
 # Chapito - Changelog
 
+## 0.1.12 (2025-05-31)
+
+- [NEW] Add Gemini support (thanks to [@MohammadrezaAmani](https://github.com/MohammadrezaAmani)).
+
 ## 0.1.11 (2025-05-25)
 
 - [NEW] Add Kimi support.

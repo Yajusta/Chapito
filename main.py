@@ -1,5 +1,6 @@
 from chapito.config import Config
 from chapito import (
+    ai_studio_chat,
     anthropic_chat,
     deepseek_chat,
     duckduckgo_chat,
@@ -15,13 +16,17 @@ from chapito.proxy import init_proxy
 from chapito.tools.tools import check_official_version, greeting
 from chapito.types import Chatbot
 
-__version__ = "0.1.11"
+__version__ = "0.1.12"
 
 
 def main():
     greeting(__version__)
     config = Config()
     check_official_version(__version__)
+
+    if config.chatbot == Chatbot.AI_STUDIO:
+        driver = ai_studio_chat.initialize_driver(config)
+        init_proxy(driver, deepseek_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.ANTHROPIC:
         driver = anthropic_chat.initialize_driver(config)

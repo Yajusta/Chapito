@@ -4,9 +4,9 @@ Free API access using your web-based chatbots ![logo](https://github.com/user-at
 
 ## Current version
 
-## 0.1.11 (2025-05-25)
+## 0.1.12 (2025-05-31)
 
-- [NEW] Add Kimi support.
+- [NEW] Add Gemini support (thanks to [@MohammadrezaAmani](https://github.com/MohammadrezaAmani)).
 
 ## Presentation
 
@@ -32,7 +32,7 @@ It achieves this by bridging the gap between premium chatbot accounts and applic
 - [x] [Anthropic](https://claude.ai/new)
 - [x] [DeepSeek](https://chat.deepseek.com/)
 - [x] [Duckduckgo](https://duck.ai/)
-- [ ] Gemini
+- [x] [Gemini](https://gemini.google.com/)
 - [ ] Github Copilot
 - [x] [Grok](https://grok.com/)
 - [x] [Kimi](https://www.kimi.com/)
