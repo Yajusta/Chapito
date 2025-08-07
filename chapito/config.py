@@ -38,6 +38,7 @@ class Config:
     stream: bool = DEFAULT_STREAM
     host: str = DEFAULT_HOST
     port: int = DEFAULT_PORT
+    headless: bool = False
 
     def __init__(self):
         logging.debug("Initializing config...")
@@ -50,7 +51,12 @@ class Config:
         parser.add_argument("--chatbot", type=str, help="Chatbot to connect to (available: grok, mistral)")
         parser.add_argument("--stream", action="store_true", help="Send response as stream")
         parser.add_argument("--no-stream", action="store_true", help="Don't send response as stream")
-        parser.add_argument("--use-browser-profile", action="store_true", help="Use a browser profile")
+        g = parser.add_mutually_exclusive_group()
+        g.add_argument("--use-browser-profile", action="store_true", default=None, help="Use a browser profile")
+        g.add_argument(
+            "--no-use-browser-profile", action="store_false", dest="use_browser_profile", help="Don't use a browser profile"
+        )
+        parser.add_argument("--headless", action="store_true", help="Run in headless mode")
         parser.add_argument("--profile-path", type=str, help="Path to the browser profile")
         parser.add_argument("--user-agent", type=str, help="User agent to use")
         parser.add_argument("--verbosity", type=int, help="Verbosity level")
@@ -70,9 +76,12 @@ class Config:
         self.stream = args.stream or config.getboolean("DEFAULT", "stream", fallback=DEFAULT_STREAM)
         if args.no_stream:
             self.stream = False
-        self.use_browser_profile = args.use_browser_profile or config.getboolean(
-            "DEFAULT", "use_browser_profile", fallback=DEFAULT_USE_BROWSER_PROFILE
-        )
+        if args.use_browser_profile is None:
+            self.use_browser_profile = config.getboolean(
+                "DEFAULT", "use_browser_profile", fallback=DEFAULT_USE_BROWSER_PROFILE
+            )
+        else:
+            self.use_browser_profile = args.use_browser_profile
         self.browser_profile_path = args.profile_path or config.get(
             "DEFAULT", "browser_profile_path", fallback=DEFAULT_BROWSER_PROFILE_PATH
         )
@@ -90,5 +99,6 @@ class Config:
 
         self.host = args.host or config.get("DEFAULT", "host", fallback=DEFAULT_HOST)
         self.port = args.port or config.getint("DEFAULT", "port", fallback=DEFAULT_PORT)
+        self.headless = args.headless or config.getboolean("DEFAULT", "headless", fallback=False)
 
         logging.debug(f"Config initialized: {self.__dict__}")

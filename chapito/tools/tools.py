@@ -1,16 +1,18 @@
 import os
 import platform
-import time
+import asyncio
+import logging
+import re
+import pyperclip
+import requests
+
 from chapito.config import Config
 from chapito.types import OsType
-from selenium.webdriver.common.keys import Keys
-import pyperclip
-import logging
-import requests
-import re
-from selenium_stealth import stealth
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+
+from pydoll.browser.chromium import Chrome
+from pydoll.browser.options import ChromiumOptions
+from pydoll.browser.tab import Tab
+from pydoll.elements.web_element import WebElement
 
 
 def get_os() -> OsType:
@@ -22,56 +24,55 @@ def get_os() -> OsType:
     return OsType.MACOS if platform.system() == "Darwin" else OsType.LINUX
 
 
-def paste(textarea):
+async def paste(tab: Tab, textarea: WebElement):
     logging.debug("Paste prompt")
-    textarea.click()
+    await textarea.click()
     if get_os() == OsType.MACOS:
-        textarea.send_keys(Keys.COMMAND, "v")
+        await tab.keyboard.down('Meta')
+        await tab.keyboard.press('v')
+        await tab.keyboard.up('Meta')
     else:
-        textarea.send_keys(Keys.CONTROL, "v")
+        await tab.keyboard.down('Control')
+        await tab.keyboard.press('v')
+        await tab.keyboard.up('Control')
 
 
-def transfer_prompt(message, textarea) -> None:
+async def transfer_prompt(tab: Tab, message: str, textarea: WebElement) -> None:
     logging.debug("Transfering prompt to chatbot interface")
     usePaste = True
     if usePaste:
         pyperclip.copy(message)
-        paste(textarea)
+        await paste(tab, textarea)
     else:
         # Send message line by line
         for line in message.split("\n"):
             # Don't send "\t" to browser to avoid focus change.
-            textarea.send_keys(line.replace("\t", "    "))
+            await textarea.type(line.replace("\t", "    "))
             # Don't send "\n" to browser to avoid early submition.
-            textarea.send_keys(Keys.SHIFT, Keys.ENTER)
-    time.sleep(0.5)
+            await tab.keyboard.down('Shift')
+            await tab.keyboard.press('Enter')
+            await tab.keyboard.up('Shift')
+    await asyncio.sleep(0.5)
     logging.debug("Prompt transfered")
 
 
-def create_driver(config: Config) -> webdriver.Chrome | webdriver.Firefox:
-    chrome_options = Options()
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument(f"user-agent={config.browser_user_agent}")
-    chrome_options.add_argument("--start-maximized")
-    chrome_options.add_argument("--log-level=1")
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
-    chrome_options.add_experimental_option("useAutomationExtension", False)
+async def create_browser_and_tab(config: Config) -> tuple[Chrome, Tab]:
+    options = ChromiumOptions()
+    if config.headless:
+        options.add_argument("--headless=new")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.user_agent = config.browser_user_agent
+    options.add_argument("--start-maximized")
+    options.add_argument("--log-level=1")
+
     if config.use_browser_profile:
         browser_profile_path = os.path.abspath(config.browser_profile_path)
         os.makedirs(browser_profile_path, exist_ok=True)
-        chrome_options.add_argument(f"user-data-dir={browser_profile_path}")
+        options.user_data_dir = browser_profile_path
 
-    driver = webdriver.Chrome(options=chrome_options)
-    stealth(
-        driver,
-        languages=["en-US", "en"],
-        vendor="Google Inc.",
-        platform="Win32",
-        webgl_vendor="Intel Inc.",
-        renderer="Intel Iris OpenGL Engine",
-        fix_hairline=True,
-    )
-    return driver
+    browser = Chrome(options=options)
+    tab = await browser.start()
+    return browser, tab
 
 
 def check_official_version(version: str) -> bool:
@@ -98,16 +99,16 @@ def get_last_version() -> str:
 
 def greeting(version: str) -> None:
     text = rf"""
-  /██████  /██                           /██   /██              
- /██__  ██| ██                          |__/  | ██              
-| ██  \__/| ███████   /██████   /██████  /██ /██████    /██████ 
+  /██████  /██                           /██   /██
+ /██__  ██| ██                          |__/  | ██
+| ██  \__/| ███████   /██████   /██████  /██ /██████    /██████
 | ██      | ██__  ██ |____  ██ /██__  ██| ██|_  ██_/   /██__  ██
 | ██      | ██  \ ██  /███████| ██  \ ██| ██  | ██    | ██  \ ██
 | ██    ██| ██  | ██ /██__  ██| ██  | ██| ██  | ██ /██| ██  | ██
 |  ██████/| ██  | ██|  ███████| ███████/| ██  |  ████/|  ██████/
- \______/ |__/  |__/ \_______/| ██____/ |__/   \___/   \______/ 
-                              | ██                              
-                              | ██                              
+ \______/ |__/  |__/ \_______/| ██____/ |__/   \___/   \______/
+                              | ██
+                              | ██
                               |__/        Version {version}
 """
 

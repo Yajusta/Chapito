@@ -2,6 +2,7 @@ import json
 from typing import Callable, List, Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+from contextlib import asynccontextmanager
 
 import time
 import uuid
@@ -10,7 +11,16 @@ import uvicorn
 import logging
 
 from chapito.config import Config
+from pydoll.browser.chromium import Chrome
+from pydoll.browser.tab import Tab
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    if hasattr(app.state, 'browser') and app.state.browser:
+        logging.info("Shutting down browser...")
+        await app.state.browser.stop()
 
 async def generate_json_stream(data: dict):
     data["choices"][0]["delta"] = data["choices"][0]["message"]
@@ -41,7 +51,7 @@ class ChatRequest(BaseModel):
     presence_penalty: Optional[float] = None
 
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 last_chat_messages: List[str] = []
 
@@ -92,7 +102,7 @@ async def chat_completions(request: ChatRequest):
         logging.debug("Can't determine latest messages, sending the whole chat session")
         prompt = "\n\n".join(f"[{message.role}] {message.content}" for message in request.messages)
 
-    response_content = app.state.send_request_and_get_response(app.state.driver, prompt)
+    response_content = await app.state.send_request_and_get_response(app.state.tab, prompt)
     if response_content:
         last_chat_messages.append(response_content)
     logging.debug(f"Response from chat ends with: {response_content[-100:]}")
@@ -126,8 +136,9 @@ async def chat_completions(request: ChatRequest):
         return JSONResponse(data)
 
 
-def init_proxy(driver, send_request_and_get_response: Callable, config: Config) -> None:
-    app.state.driver = driver
+def init_proxy(browser: Chrome, tab: Tab, send_request_and_get_response: Callable, config: Config) -> None:
+    app.state.browser = browser
+    app.state.tab = tab
     app.state.send_request_and_get_response = send_request_and_get_response
     app.state.config = config
 

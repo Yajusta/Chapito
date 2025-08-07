@@ -1,13 +1,11 @@
-import time
+import asyncio
 import logging
 import pyperclip
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup, Tag
 
 from chapito.config import Config
-from chapito.tools.tools import create_driver, transfer_prompt
+from chapito.tools.tools import create_browser_and_tab, transfer_prompt
+from pydoll.browser.tab import Tab
 
 URL: str = "https://duck.ai/"
 TIMEOUT_SECONDS: int = 120
@@ -15,53 +13,49 @@ SUBMIT_CSS_SELECTOR: str = 'button[type="submit"][aria-label="Send"]'
 ANSWER_XPATH: str = "//div[@heading]"
 
 
-def check_if_chat_loaded(driver) -> bool:
-    driver.implicitly_wait(5)
+async def check_if_chat_loaded(tab: Tab) -> bool:
     try:
-        button = driver.find_element(By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)
+        button = await tab.find(css_selector=SUBMIT_CSS_SELECTOR, timeout=5, raise_exc=False)
     except Exception as e:
         logging.warning("Can't find submit button in chat interface. Maybe it's not loaded yet.")
         return False
     return button is not None
 
 
-def initialize_driver(config: Config):
-    logging.info("Initializing browser for DeepSeek...")
-    driver = create_driver(config)
-    driver.get(URL)
+async def initialize_tab(config: Config):
+    logging.info("Initializing browser for DuckDuckGo...")
+    browser, tab = await create_browser_and_tab(config)
+    await tab.go_to(URL)
 
-    while not check_if_chat_loaded(driver):
+    while not await check_if_chat_loaded(tab):
         logging.info("Waiting for chat interface to load...")
-        time.sleep(5)
+        await asyncio.sleep(5)
     logging.info("Browser initialized")
-    return driver
+    return browser, tab
 
 
-def send_request_and_get_response(driver, message):
+async def send_request_and_get_response(tab: Tab, message: str):
     logging.debug("Send request to chatbot interface")
-    driver.implicitly_wait(10)
-    textarea = driver.find_element(By.TAG_NAME, "textarea")
-    transfer_prompt(message, textarea)
-    wait = WebDriverWait(driver, TIMEOUT_SECONDS)
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)))
-    time.sleep(1)
-    submit_buttons = driver.find_elements(By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)
+    textarea = await tab.find(tag_name="textarea", timeout=10)
+    await transfer_prompt(tab, message, textarea)
+    await tab.find(css_selector=SUBMIT_CSS_SELECTOR, timeout=TIMEOUT_SECONDS)
+    await asyncio.sleep(1)
+    submit_buttons = await tab.query(css_selector=SUBMIT_CSS_SELECTOR)
     submit_button = submit_buttons[-1]
     logging.debug("Push submit button")
-    submit_button.click()
+    await submit_button.click()
 
     # Wait a little time to avoid early fail.
-    time.sleep(1)
+    await asyncio.sleep(1)
 
     # Wait for submit button to be available. It means answer is finished.
-    wait = WebDriverWait(driver, TIMEOUT_SECONDS)
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)))
-    scroll_down(driver)
+    await tab.find(css_selector=SUBMIT_CSS_SELECTOR, timeout=TIMEOUT_SECONDS)
+
     message = ""
     remaining_attemps = 5
     while not message and remaining_attemps > 0:
-        time.sleep(1)
-        message = get_answer_from_copy_button(driver)
+        await asyncio.sleep(1)
+        message = await get_answer_from_copy_button(tab)
         remaining_attemps -= 1
 
     if not message:
@@ -72,24 +66,15 @@ def send_request_and_get_response(driver, message):
     return clean_message
 
 
-def scroll_down(driver):
-    form_element = driver.find_element(By.XPATH, "//form[@autocomplete='off']")
-    div_element = form_element.find_element(By.XPATH, "./ancestor::div[1]")
-    if scrollable_div := div_element.find_element(By.TAG_NAME, "div"):
-        driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", scrollable_div)
-    else:
-        logging.warning("No scrollable div found.")
-
-
-def get_answer_from_copy_button(driver) -> str:
-    message_bubbles = driver.find_elements(By.XPATH, ANSWER_XPATH)
+async def get_answer_from_copy_button(tab: Tab) -> str:
+    message_bubbles = await tab.query(xpath=ANSWER_XPATH)
     if not message_bubbles:
         logging.warning("No message found.")
         return ""
     last_message_bubble = message_bubbles[-1]
-    copy_button = last_message_bubble.find_element(By.XPATH, "//*[@data-copyairesponse='true']")
+    copy_button = await last_message_bubble.find(xpath="//*[@data-copyairesponse='true']")
     try:
-        copy_button.click()
+        await copy_button.click()
     except Exception as e:
         logging.warning("Error clicking copy button:", e)
         return ""
@@ -100,18 +85,18 @@ def clean_chat_answer(text: str) -> str:
     return text.replace("\r\n", "\n").strip()
 
 
-def main():
-    driver = initialize_driver(Config())
+async def main():
+    browser, tab = await initialize_tab(Config())
     try:
         while True:
             user_request = input("Ask something (or 'quit'): ")
             if user_request.lower() == "quit":
                 break
-            response = send_request_and_get_response(driver, user_request)
+            response = await send_request_and_get_response(tab, user_request)
             print("Answer:", response)
     finally:
-        driver.quit()
+        await browser.stop()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

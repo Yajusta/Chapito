@@ -1,15 +1,12 @@
+import asyncio
 import contextlib
 import time
 import logging
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
-
 from bs4 import BeautifulSoup, Tag
 
 from chapito.config import Config
-from chapito.tools.tools import create_driver, transfer_prompt
+from chapito.tools.tools import create_browser_and_tab, transfer_prompt
+from pydoll.browser.tab import Tab
 
 MISTRAL_URL: str = "https://chat.mistral.ai/"
 TIMEOUT_SECONDS: int = 120
@@ -19,66 +16,60 @@ ANSWER_CSS_SELECTOR: str = "div.prose"
 SCROLL_DOWN_CSS_SELECTOR: str = 'button.disabled\\:pointer-auto[type="button"]'
 
 
-def check_if_chat_loaded(driver) -> bool:
-    driver.implicitly_wait(5)
+async def check_if_chat_loaded(tab: Tab) -> bool:
     try:
-        button = driver.find_element(By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)
+        button = await tab.find(css_selector=SUBMIT_CSS_SELECTOR, timeout=5, raise_exc=False)
     except Exception as e:
         logging.warning("Can't find submit button in chat interface. Maybe it's not loaded yet.")
         return False
     return button is not None
 
 
-def scroll_to_bottom(driver) -> None:
-    with contextlib.suppress(NoSuchElementException):
-        driver.implicitly_wait(1)
-        buttons = driver.find_elements(By.CSS_SELECTOR, SCROLL_DOWN_CSS_SELECTOR)
-        for button in buttons[::-1]:
-            parent_div = button.find_element(By.XPATH, "..")
-            if parent_div.tag_name == "div":
-                button.click()
-                return
+async def scroll_to_bottom(tab: Tab) -> None:
+    buttons = await tab.query(css_selector=SCROLL_DOWN_CSS_SELECTOR)
+    for button in buttons[::-1]:
+        parent_div = await button.find(xpath="..")
+        if parent_div and await parent_div.tag_name == "div":
+            await button.click()
+            return
 
 
-def initialize_driver(config: Config):
+async def initialize_tab(config: Config):
     logging.info("Initializing browser for Mistral...")
-    driver = create_driver(config)
-    driver.get(MISTRAL_URL)
+    browser, tab = await create_browser_and_tab(config)
+    await tab.go_to(MISTRAL_URL)
 
-    while not check_if_chat_loaded(driver):
+    while not await check_if_chat_loaded(tab):
         logging.info("Waiting for chat interface to load...")
-        time.sleep(5)
+        await asyncio.sleep(5)
     logging.info("Browser initialized")
-    return driver
+    return browser, tab
 
 
-def send_request_and_get_response(driver, message):
+async def send_request_and_get_response(tab: Tab, message: str):
     logging.debug("Send request to chatbot interface")
-    driver.implicitly_wait(10)
-    textarea = driver.find_element(By.CSS_SELECTOR, TEXTAREA_CSS_SELECTOR)
-    transfer_prompt(message, textarea)
-    wait = WebDriverWait(driver, TIMEOUT_SECONDS)
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)))
-    submit_button = driver.find_element(By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)
+    textarea = await tab.find(css_selector=TEXTAREA_CSS_SELECTOR, timeout=10)
+    await transfer_prompt(tab, message, textarea)
+    await tab.find(css_selector=SUBMIT_CSS_SELECTOR, timeout=TIMEOUT_SECONDS)
+    submit_button = await tab.find(css_selector=SUBMIT_CSS_SELECTOR)
     logging.debug("Push submit button")
-    submit_button.click()
+    await submit_button.click()
 
     # Wait a little time to avoid early fail.
-    time.sleep(1)
+    await asyncio.sleep(1)
 
     # Wait for submit button to be available. It means answer is finished.
-    wait = WebDriverWait(driver, TIMEOUT_SECONDS)
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)))
+    await tab.find(css_selector=SUBMIT_CSS_SELECTOR, timeout=TIMEOUT_SECONDS)
 
-    message_bubbles = driver.find_elements(By.CSS_SELECTOR, ANSWER_CSS_SELECTOR)
+    message_bubbles = await tab.query(css_selector=ANSWER_CSS_SELECTOR)
     if not message_bubbles:
         logging.warning("No message found.")
         return ""
     last_message_bubble = message_bubbles[-1]
-    html = last_message_bubble.get_attribute("outerHTML")
+    html = last_message_bubble.outer_html
     clean_message = clean_chat_answer(html)
     logging.debug(f"Clean message ends with: {clean_message[-100:]}")
-    # scroll_to_bottom(driver)
+    # await scroll_to_bottom(tab)
     return clean_message
 
 
@@ -100,18 +91,18 @@ def clean_chat_answer(html: str) -> str:
     return soup.get_text().strip()
 
 
-def main():
-    driver = initialize_driver(Config())
+async def main():
+    browser, tab = await initialize_tab(Config())
     try:
         while True:
             user_request = input("Ask something (or 'quit'): ")
             if user_request.lower() == "quit":
                 break
-            response = send_request_and_get_response(driver, user_request)
+            response = await send_request_and_get_response(tab, user_request)
             print("Answer:", response)
     finally:
-        driver.quit()
+        await browser.stop()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

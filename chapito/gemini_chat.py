@@ -1,13 +1,12 @@
+import asyncio
 import logging
 import time
 
 from bs4 import BeautifulSoup, Tag
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from pydoll.browser.tab import Tab
 
 from chapito.config import Config
-from chapito.tools.tools import create_driver, transfer_prompt
+from chapito.tools.tools import create_browser_and_tab, transfer_prompt
 
 URL: str = "https://gemini.google.com/app"
 TIMEOUT_SECONDS: int = 1000
@@ -17,54 +16,50 @@ MICROPHONE_CSS_SELECTOR: str = "div.mic-button-container:not(.hidden)"
 ANSWER_XPATH: str = "//message-content"
 
 
-def check_if_chat_loaded(driver) -> bool:
-    driver.implicitly_wait(5)
+async def check_if_chat_loaded(tab: Tab) -> bool:
     try:
-        button = driver.find_element(By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)
+        button = await tab.find(css_selector=SUBMIT_CSS_SELECTOR, timeout=5, raise_exc=False)
     except Exception:
         logging.warning("Can't find submit button in chat interface. Maybe it's not loaded yet.")
         return False
     return button is not None
 
 
-def initialize_driver(config: Config):
+async def initialize_tab(config: Config):
     logging.info("Initializing browser for Gemini...")
-    driver = create_driver(config)
-    driver.get(URL)
+    browser, tab = await create_browser_and_tab(config)
+    await tab.go_to(URL)
 
-    while not check_if_chat_loaded(driver):
+    while not await check_if_chat_loaded(tab):
         logging.info("Waiting for chat interface to load...")
-        time.sleep(5)
+        await asyncio.sleep(5)
     logging.info("Browser initialized")
-    return driver
+    return browser, tab
 
 
-def send_request_and_get_response(driver, message):
+async def send_request_and_get_response(tab: Tab, message: str):
     logging.debug("Send request to chatbot interface")
-    driver.implicitly_wait(10)
-    textareas = driver.find_elements(By.CLASS_NAME, "textarea")
+    textareas = await tab.query(class_name="textarea", timeout=10)
     print(len(textareas))
     textarea = textareas[-1]
-    transfer_prompt(message, textarea)
-    wait = WebDriverWait(driver, TIMEOUT_SECONDS)
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)))
-    submit_button = driver.find_element(By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)
+    await transfer_prompt(tab, message, textarea)
+    await tab.find(css_selector=SUBMIT_CSS_SELECTOR, timeout=TIMEOUT_SECONDS)
+    submit_button = await tab.find(css_selector=SUBMIT_CSS_SELECTOR)
     logging.debug("Push submit button")
-    submit_button.click()
+    await submit_button.click()
 
     # Wait a little time to avoid early fail.
-    time.sleep(1)
+    await asyncio.sleep(1)
 
     # Wait for stop button to be hidden. It means answer is finished.
-    wait = WebDriverWait(driver, TIMEOUT_SECONDS)
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, MICROPHONE_CSS_SELECTOR)))
+    await tab.find(css_selector=MICROPHONE_CSS_SELECTOR, timeout=TIMEOUT_SECONDS)
 
-    message_bubbles = driver.find_elements(By.XPATH, ANSWER_XPATH)
+    message_bubbles = await tab.query(xpath=ANSWER_XPATH)
     if not message_bubbles:
         logging.warning("No message found.")
         return ""
     last_message_bubble = message_bubbles[-1]
-    html = last_message_bubble.get_attribute("outerHTML")
+    html = last_message_bubble.outer_html
     clean_message = clean_chat_answer(html)
     logging.debug(f"Clean message ends with: {clean_message[-100:]}")
     return clean_message
@@ -94,18 +89,18 @@ def clean_chat_answer(html: str) -> str:
     return clean_answer
 
 
-def main():
-    driver = initialize_driver(Config())
+async def main():
+    browser, tab = await initialize_tab(Config())
     try:
         while True:
             user_request = input("Ask something (or 'quit'): ")
             if user_request.lower() == "quit":
                 break
-            response = send_request_and_get_response(driver, user_request)
+            response = await send_request_and_get_response(tab, user_request)
             print("Answer:", response)
     finally:
-        driver.quit()
+        await browser.stop()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

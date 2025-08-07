@@ -9,12 +9,12 @@ dependencies = [
     "fastapi>=0.115.11",
     "pyperclip>=1.9.0",
     "requests>=2.32.3",
-    "selenium>=4.29.0",
-    "selenium-stealth>=1.0.6",
+    "pydoll-python>=0.1.0",
     "uvicorn>=0.34.0",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "pytest>=8.3.5",
+    "pytest-asyncio",
 ]

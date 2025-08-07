@@ -54,12 +54,12 @@ from unittest.mock import patch
         # Error cases - invalid config file
         (
             "invalid_config.ini",
-            False,
+                None,
             None,
             False,
             None,
             "invalid_config.ini",
-            False,
+                True,
             DEFAULT_BROWSER_PROFILE_PATH,
         ),  # id: invalid_config_file
     ],
@@ -98,12 +98,18 @@ browser_profile_path = {file_profile_path}
     with patch(
         "argparse.ArgumentParser.parse_args",
         return_value=argparse.Namespace(
-            **dict(
-                zip(
-                    ["config", "use_browser_profile", "profile_path", "user_agent"],
-                    [cli_config or "config.ini", cli_use_browser_profile, cli_profile_path, ""],
-                )
-            )
+            **{
+                "config": cli_config or "config.ini",
+                "chatbot": None,
+                "stream": False,
+                "no_stream": False,
+                "use_browser_profile": cli_use_browser_profile,
+                "profile_path": cli_profile_path,
+                "user_agent": "",
+                "verbosity": None,
+                "host": None,
+                "port": None,
+            }
         ),
     ):
 

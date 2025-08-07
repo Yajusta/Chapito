@@ -1,5 +1,29 @@
 import pytest
+from unittest.mock import AsyncMock, patch
 import chapito.anthropic_chat as anthropic_chat
+
+
+@pytest.mark.asyncio
+async def test_send_request_and_get_response():
+    # Arrange
+    mock_tab = AsyncMock()
+    mock_element = AsyncMock()
+    mock_tab.find.return_value = mock_element
+    mock_tab.query.return_value = [mock_element]
+    mock_element.outer_html = "<html><body>Mocked response</body></html>"
+
+    message = "Hello, world!"
+
+    # Act
+    with patch('chapito.anthropic_chat.transfer_prompt', new_callable=AsyncMock):
+        await anthropic_chat.send_request_and_get_response(mock_tab, message)
+
+    # Assert
+    mock_tab.find.assert_any_call(css_selector="div[contenteditable='true']", timeout=10)
+    mock_tab.find.assert_any_call(css_selector=anthropic_chat.SUBMIT_CSS_SELECTOR, timeout=anthropic_chat.TIMEOUT_SECONDS)
+    mock_element.click.assert_awaited()
+    mock_tab.find.assert_any_call(css_selector=anthropic_chat.SUBMIT_DISABLE_CSS_SELECTOR, timeout=anthropic_chat.TIMEOUT_SECONDS)
+    mock_tab.query.assert_awaited_with(xpath=anthropic_chat.ANSWER_XPATH)
 
 
 def test_clean_chat_answer() -> None:

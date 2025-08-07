@@ -1,3 +1,4 @@
+import asyncio
 from chapito.config import Config
 from chapito import (
     ai_studio_chat,
@@ -19,55 +20,55 @@ from chapito.types import Chatbot
 __version__ = "0.1.12"
 
 
-def main():
+async def main():
     greeting(__version__)
     config = Config()
     check_official_version(__version__)
 
     if config.chatbot == Chatbot.AI_STUDIO:
-        driver = ai_studio_chat.initialize_driver(config)
-        init_proxy(driver, deepseek_chat.send_request_and_get_response, config)
+        browser, tab = await ai_studio_chat.initialize_tab(config)
+        init_proxy(browser, tab, ai_studio_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.ANTHROPIC:
-        driver = anthropic_chat.initialize_driver(config)
-        init_proxy(driver, anthropic_chat.send_request_and_get_response, config)
+        browser, tab = await anthropic_chat.initialize_tab(config)
+        init_proxy(browser, tab, anthropic_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.DEEPSEEK:
-        driver = deepseek_chat.initialize_driver(config)
-        init_proxy(driver, deepseek_chat.send_request_and_get_response, config)
+        browser, tab = await deepseek_chat.initialize_tab(config)
+        init_proxy(browser, tab, deepseek_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.DUCKDUCKGO:
-        driver = duckduckgo_chat.initialize_driver(config)
-        init_proxy(driver, duckduckgo_chat.send_request_and_get_response, config)
+        browser, tab = await duckduckgo_chat.initialize_tab(config)
+        init_proxy(browser, tab, duckduckgo_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.GEMINI:
-        driver = gemini_chat.initialize_driver(config)
-        init_proxy(driver, gemini_chat.send_request_and_get_response, config)
+        browser, tab = await gemini_chat.initialize_tab(config)
+        init_proxy(browser, tab, gemini_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.GROK:
-        driver = grok_chat.initialize_driver(config)
-        init_proxy(driver, grok_chat.send_request_and_get_response, config)
+        browser, tab = await grok_chat.initialize_tab(config)
+        init_proxy(browser, tab, grok_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.KIMI:
-        driver = kimi_chat.initialize_driver(config)
-        init_proxy(driver, kimi_chat.send_request_and_get_response, config)
+        browser, tab = await kimi_chat.initialize_tab(config)
+        init_proxy(browser, tab, kimi_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.MISTRAL:
-        driver = mistral_chat.initialize_driver(config)
-        init_proxy(driver, mistral_chat.send_request_and_get_response, config)
+        browser, tab = await mistral_chat.initialize_tab(config)
+        init_proxy(browser, tab, mistral_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.OPENAI:
-        driver = openai_chat.initialize_driver(config)
-        init_proxy(driver, openai_chat.send_request_and_get_response, config)
+        browser, tab = await openai_chat.initialize_tab(config)
+        init_proxy(browser, tab, openai_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.PERPLEXITY:
-        driver = perplexity_chat.initialize_driver(config)
-        init_proxy(driver, perplexity_chat.send_request_and_get_response, config)
+        browser, tab = await perplexity_chat.initialize_tab(config)
+        init_proxy(browser, tab, perplexity_chat.send_request_and_get_response, config)
 
     if config.chatbot == Chatbot.QWEN:
-        driver = qwen_chat.initialize_driver(config)
-        init_proxy(driver, qwen_chat.send_request_and_get_response, config)
+        browser, tab = await qwen_chat.initialize_tab(config)
+        init_proxy(browser, tab, qwen_chat.send_request_and_get_response, config)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
