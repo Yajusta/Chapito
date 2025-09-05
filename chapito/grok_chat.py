@@ -11,13 +11,14 @@ from chapito.tools.tools import create_driver, transfer_prompt
 GROK_URL: str = "https://grok.com/"
 TIMEOUT_SECONDS: int = 120
 SUBMIT_CSS_SELECTOR: str = 'button[type="submit"][aria-label="Submit"]'
+VOICE_CSS_SELECTOR: str = 'button[tabindex="0"][aria-label="Enter voice mode"]'
 ANSWER_XPATH: str = '//div[@dir="auto" and contains(@class, "message-bubble")]'
 
 
 def check_if_chat_loaded(driver) -> bool:
     driver.implicitly_wait(5)
     try:
-        button = driver.find_element(By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)
+        button = driver.find_element(By.CSS_SELECTOR, VOICE_CSS_SELECTOR)
         captcha_inputs = driver.find_elements(By.NAME, "cf-turnstile-response")
         captcha_input = captcha_inputs[0] if captcha_inputs else None
         if captcha_input:
@@ -57,7 +58,7 @@ def send_request_and_get_response(driver, message):
 
     # Wait for submit button to be available. It means answer is finished.
     wait = WebDriverWait(driver, TIMEOUT_SECONDS)
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, SUBMIT_CSS_SELECTOR)))
+    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, VOICE_CSS_SELECTOR)))
 
     message_bubbles = driver.find_elements(By.XPATH, ANSWER_XPATH)
     if not message_bubbles:

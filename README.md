@@ -4,9 +4,9 @@ Free API access using your web-based chatbots ![logo](https://github.com/user-at
 
 ## Current version
 
-## 0.1.12 (2025-05-31)
+### 0.1.13 (2025-09-05)
 
-- [NEW] Add Gemini support (thanks to [@MohammadrezaAmani](https://github.com/MohammadrezaAmani)).
+- [FIX] Grok chat compatibility.
 
 ## Presentation
 

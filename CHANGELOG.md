@@ -1,5 +1,9 @@
 # Chapito - Changelog
 
+## 0.1.13 (2025-09-05)
+
+- [FIX] Grok chat compatibility.
+
 ## 0.1.12 (2025-05-31)
 
 - [NEW] Add Gemini support (thanks to [@MohammadrezaAmani](https://github.com/MohammadrezaAmani)).
