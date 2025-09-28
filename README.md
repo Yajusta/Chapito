@@ -145,3 +145,7 @@ Add the following custom instruction: `Do not use <![CDATA[ and ]]> tags in your
 
 **Q: AIder raises an exception `litellm.APIError: APIError: OpenAIException - 'str' object has no attribute 'model_dump'`.**  
 **A:** *AIder* and *Chapito* have to be in "no-stream" output.  
+
+## Licence
+
+GPL-v3
