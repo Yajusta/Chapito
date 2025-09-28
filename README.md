@@ -148,4 +148,4 @@ Add the following custom instruction: `Do not use <![CDATA[ and ]]> tags in your
 
 ## Licence
 
-GPL-v3
+[GPL-v3](https://www.gnu.org/licenses/gpl-3.0.txt)
